@@ -3,6 +3,8 @@ trigger:
 
 pool:
   vmImage: 'ubuntu-latest'
+  demands:          # Force single job
+    - agent.name -equals $(agent.name)
 
 variables:
   MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
@@ -33,3 +35,6 @@ steps:
       PathtoPublish: '$(System.DefaultWorkingDirectory)'
       ArtifactName: 'drop'
       publishLocation: 'Container'
+
+  - script: mvn test
+    displayName: 'Run M365 Automation Tests'
