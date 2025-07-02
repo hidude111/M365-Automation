@@ -1,5 +1,7 @@
 package config;
 
+import com.azure.core.credential.TokenCredential;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
@@ -45,4 +47,11 @@ public class ConfigManager
         return getProperty("powerplatform.appsUrl");
     }
 
+    public static String getAzureAIEndpoint() { return getProperty("ai.azure.endpoint"); }
+
+    public static String getAzureAIKey() { return getProperty("ai.azure.key"); }
+
+    public static Boolean getEnabled() {
+        return Boolean.parseBoolean(ConfigManager.getProperty("ai.enabled"));
+    }
 }
