@@ -1,74 +1,44 @@
 trigger:
-  - main
+  branches:
+    include:
+      - main
 
-on:
-  push:
-    branches: [ main ]
-  schedule:
-    - cron: '0 8 * * 1-5'  # Runs at 8 AM UTC, Mon-Fri (adjust per timezone)
-
+schedules:
+  - cron: "0 8 * * 1-5"  # 8 AM UTC, Mon–Fri
+    displayName: Weekday 8 AM Run
+    branches:
+      include:
+        - main
+    always: true
 
 pool:
   vmImage: 'ubuntu-latest'
-  demands:          # Force single job
-    - agent.name -equals $(agent.name)
 
 variables:
-  MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
+  MAVEN_CACHE_FOLDER: '$(Pipeline.Workspace)/.m2/repository'
   MAVEN_OPTS: '-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Java
-        uses: actions/setup-java@v3
-        with:
-          java-version: '11'
-          distribution: 'temurin'
-
-      - name: Run TestNG Suite
-        run: mvn test -Dtest=FullRegressionSuite
-
-      - name: Upload Test Results
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: test-reports
-          path: target/surefire-reports/
-
-      - name: Analyze with AI (Example)
-        if: failure()
-        run: |
-          echo "Triggering AI analysis for failed tests..."
-          # Integrate with Azure AI/Applitools API here
-
-      - name: Notify Teams
-        uses: matrix-org/matrix-actions/notify@v1
-        if: failure()
-        with:
-          webhook-url: ${{ secrets.TEAMS_WEBHOOK }}
-          message: "🔴 Tests failed in ${{ github.repository }}. See ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
-
-
 steps:
+  - task: JavaToolInstaller@0
+    inputs:
+      versionSpec: '11'
+      jdkArchitectureOption: 'x64'
+      jdkSourceOption: 'PreInstalled'
+
   - task: Maven@3
     inputs:
       mavenPomFile: 'pom.xml'
       goals: 'test'
-      options: '-Dtest=**/*Tests.java'
+      options: '-Dtest=FullRegressionSuite'
       publishJUnitResults: true
       testResultsFiles: '**/TEST-*.xml'
       javaHomeOption: 'JDKVersion'
       jdkVersionOption: '1.11'
       mavenVersionOption: 'Default'
       mavenAuthenticateFeed: false
-      sonarQubeRunAnalysis: false
 
   - task: PublishTestResults@2
+    condition: always()
     inputs:
       testResultsFormat: 'JUnit'
       testResultsFiles: '**/TEST-*.xml'
@@ -80,5 +50,16 @@ steps:
       ArtifactName: 'drop'
       publishLocation: 'Container'
 
-  - script: mvn test
-    displayName: 'Run M365 Automation Tests'
+  # Optional: Stub for Azure AI/Applitools integration on failure
+  - script: |
+      echo "Running AI analysis for failed tests..."
+      # TODO: Insert API call to your AI testing tool here
+    displayName: 'Run AI Failure Analysis'
+    condition: failed()
+
+  # Optional: Notify Microsoft Teams on failure
+  - script: |
+      echo "Sending Teams notification for test failure..."
+      # TODO: Replace with real Teams webhook curl command or use Logic App
+    displayName: 'Notify Teams on Failure'
+    condition: failed()
