@@ -7,8 +7,12 @@ import config.ConfigManager;
 import okhttp3.Request;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.testng.ITestResult;
+import org.testng.annotations.AfterGroups;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import utilities.AITestAnalyzer;
+
 import java.util.Collections;
 
 
@@ -39,11 +43,29 @@ public class BaseTest
     }
 
     @AfterMethod
-    public void tearDown() {
+    public void teardown(ITestResult result) {
+        trackTestResult(result);
+        stopDriver();
+    }
+
+    public void trackTestResult(ITestResult result) {
+        // Record test execution for flakiness detection
+        AITestAnalyzer.recordTestExecution(
+                result.getName(),
+                result.getStatus() == ITestResult.SUCCESS
+        );
+
+        // Generate report after test suite
+        if (result.getMethod().isAfterClassConfiguration()) {
+            AITestAnalyzer.generateFlakinessReport();
+        }
+    }
+    public void stopDriver() {
         if (driver != null) {
             driver.quit();
         }
     }
+
 
 
 }

@@ -1,6 +1,13 @@
 trigger:
   - main
 
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '0 8 * * 1-5'  # Runs at 8 AM UTC, Mon-Fri (adjust per timezone)
+
+
 pool:
   vmImage: 'ubuntu-latest'
   demands:          # Force single job
@@ -9,6 +16,43 @@ pool:
 variables:
   MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
   MAVEN_OPTS: '-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+
+      - name: Run TestNG Suite
+        run: mvn test -Dtest=FullRegressionSuite
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-reports
+          path: target/surefire-reports/
+
+      - name: Analyze with AI (Example)
+        if: failure()
+        run: |
+          echo "Triggering AI analysis for failed tests..."
+          # Integrate with Azure AI/Applitools API here
+
+      - name: Notify Teams
+        uses: matrix-org/matrix-actions/notify@v1
+        if: failure()
+        with:
+          webhook-url: ${{ secrets.TEAMS_WEBHOOK }}
+          message: "🔴 Tests failed in ${{ github.repository }}. See ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+
 
 steps:
   - task: Maven@3
