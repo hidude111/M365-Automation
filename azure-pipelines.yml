@@ -4,8 +4,8 @@ trigger:
       - main
 
 schedules:
-  - cron: "0 8 * * 1-5"  # 8 AM UTC, Mon–Fri
-    displayName: Weekday 8 AM Run
+  - cron: "0 0 * * 1-5"  # 8 AM UTC, Mon–Fri
+    displayName: Daily Midnight Build
     branches:
       include:
         - main
