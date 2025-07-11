@@ -42,6 +42,12 @@ public class ConfigManager
         return getProperty("sharepoint.siteUrl");
     }
 
+    public static String getSharePointUploadUrl() { return getProperty("sharepoint.uploadUrl"); }
+
+    public static String getSharePointSiteId() {
+        return getProperty("sharepoint.siteId");
+    }
+
     // Power Platform configurations
     public static String getPowerAppsUrl() {
         return getProperty("powerplatform.appsUrl");
